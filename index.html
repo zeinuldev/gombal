@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Love Animation</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1a1a1a;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff4d88;
+      margin: 20px 0 10px;
+      text-shadow: 0 0 10px #ff99cc;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 10px 15px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      width: 240px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #ff4d88;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e6005c;
+    }
+    canvas {
+      width: 100%;
+      max-width: 600px;
+      height: 220px;
+      border-radius: 10px;
+      background-color: #111;
+    }
+    #loveText {
+      margin-top: 20px;
+      font-size: 1.6rem;
+      color: #ff66a3;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      text-shadow: 0 0 5px #ff99cc;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  
+  <form id="form">
+    <input type="text" id="nameInput" placeholder="Ketik nama kamu..." required />
+    <button type="submit">Tampilkan</button>
+  </form>
+
+  <canvas id="canvas"></canvas>
+  <div id="loveText"></div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const loveText = document.getElementById('loveText');
+    const input = document.getElementById('nameInput');
+    let width, height;
+
+    function resizeCanvas() {
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      if (lastName) drawName(lastName);
+    });
+
+    class Heart {
+      constructor(tx, ty) {
+        this.tx = tx;
+        this.ty = ty;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = 1 + Math.random() * 1;
+        this.speed = 0.07 + Math.random() * 0.03;
+        this.color = "#ff4d88";
+      }
+
+      update() {
+        this.x += (this.tx - this.x) * this.speed;
+        this.y += (this.ty - this.y) * this.speed;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.size / 30, this.size / 30);
+        ctx.beginPath();
+        ctx.moveTo(75, 40);
+        ctx.bezierCurveTo(75, 37, 70, 25, 50, 25);
+        ctx.bezierCurveTo(20, 25, 20, 62.5, 20, 62.5);
+        ctx.bezierCurveTo(20, 80, 40, 102, 75, 120);
+        ctx.bezierCurveTo(110, 102, 130, 80, 130, 62.5);
+        ctx.bezierCurveTo(130, 62.5, 130, 25, 100, 25);
+        ctx.bezierCurveTo(85, 25, 75, 37, 75, 40);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = "#ff99cc";
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    let hearts = [];
+    let lastName = "";
+
+    function getPointsFromText(text) {
+      const offscreen = document.createElement("canvas");
+      const ctx2 = offscreen.getContext("2d");
+      offscreen.width = width;
+      offscreen.height = height;
+      ctx2.clearRect(0, 0, width, height);
+      ctx2.fillStyle = "white";
+      ctx2.font = "bold 60px Arial";
+      ctx2.textAlign = "center";
+      ctx2.textBaseline = "middle";
+      ctx2.fillText(text, width / 2, height / 2);
+
+      const imageData = ctx2.getImageData(0, 0, width, height).data;
+      const points = [];
+      const gap = 6;
+
+      for (let y = 0; y < height; y += gap) {
+        for (let x = 0; x < width; x += gap) {
+          const alpha = imageData[(y * width + x) * 4 + 3];
+          if (alpha > 150) points.push({ x, y });
+        }
+      }
+
+      return points;
+    }
+
+    function drawName(name) {
+      hearts = [];
+      const points = getPointsFromText(name);
+      points.forEach(p => {
+        hearts.push(new Heart(p.x, p.y));
+      });
+
+      loveText.style.opacity = 0;
+      setTimeout(() => {
+        loveText.textContent = `I Love You, ${name}`;
+        loveText.style.opacity = 1;
+      }, 300);
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      hearts.forEach(h => {
+        h.update();
+        h.draw(ctx);
+      });
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = input.value.trim();
+      if (name) {
+        lastName = name;
+        drawName(name);
+      }
+    });
+
+    animate();
+  </script>
+</body>
+</html>
